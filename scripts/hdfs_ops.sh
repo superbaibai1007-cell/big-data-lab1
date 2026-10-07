@@ -14,7 +14,7 @@ case "${1:-help}" in
     if hdfs dfs -test -e "$3"; then
       isfile "$3"
       if [[ $4 == append ]]; then hdfs dfs -appendToFile "$2" "$3"
-      else hdfs dfs -put -f "$2" "$3"; fi
+      else hdfs dfs -put -f "$2" "$3"; mark "$3"; fi
     else hdfs dfs -put "$2" "$3"; mark "$3"; fi
     ;;
   download)
@@ -68,7 +68,7 @@ case "${1:-help}" in
       hdfs dfs -cat "$2" >> "$scratch/new"
       hdfs dfs -put "$scratch/new" "$stage"
       perm=$(hdfs dfs -stat '%a' "$2"); hdfs dfs -chmod "$perm" "$stage"
-      created=$(hdfs dfs -getfattr -n user.lab.createdAt "$2" 2>/dev/null | sed -n 's/^user.lab.createdAt="\(.*\)"$/\1/p')
+      created=$(hdfs dfs -getfattr -d "$2" | sed -n 's/^user.lab.createdAt="\(.*\)"$/\1/p')
       [[ -z $created ]] || hdfs dfs -setfattr -n user.lab.createdAt -v "$created" "$stage"
       hdfs dfs -mv "$2" "$backup"
       if hdfs dfs -mv "$stage" "$2"; then hdfs dfs -rm "$backup"
