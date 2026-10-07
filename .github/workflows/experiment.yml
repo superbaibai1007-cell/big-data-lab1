@@ -1,0 +1,51 @@
+name: Hadoop experiment
+on:
+  push:
+    paths-ignore:
+      - 'README.md'
+      - 'evidence/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  experiment:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Download and verify Apache Hadoop
+        run: |
+          curl --fail --location --retry 3 -o /tmp/hadoop.tar.gz https://archive.apache.org/dist/hadoop/common/hadoop-3.4.1/hadoop-3.4.1.tar.gz
+          curl --fail --location --retry 3 -o /tmp/hadoop.sha512 https://archive.apache.org/dist/hadoop/common/hadoop-3.4.1/hadoop-3.4.1.tar.gz.sha512
+          expected=$(grep -Eo '[0-9a-fA-F]{128}' /tmp/hadoop.sha512 | head -1)
+          test -n "$expected"
+          echo "$expected  /tmp/hadoop.tar.gz" | sha512sum --check
+          sudo tar -xzf /tmp/hadoop.tar.gz -C /usr/local
+          sudo ln -s /usr/local/hadoop-3.4.1 /usr/local/hadoop
+      - name: Prepare fresh hadoop user and isolated lab
+        run: |
+          sudo useradd -m -s /bin/bash hadoop
+          echo 'hadoop ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/hadoop-lab > /dev/null
+          sudo cp -a . /home/hadoop/lab
+          sudo chown -R hadoop:hadoop /home/hadoop/lab /usr/local/hadoop-3.4.1
+      - name: Execute Linux and Hadoop experiments
+        run: |
+          sudo -u hadoop env HOME=/home/hadoop JAVA_HOME="$JAVA_HOME" HADOOP_HOME=/usr/local/hadoop PATH="/usr/local/hadoop/bin:$JAVA_HOME/bin:$PATH" bash /home/hadoop/lab/scripts/run_all.sh
+      - name: Collect logs and compiled jar
+        if: always()
+        run: |
+          mkdir -p results
+          sudo cp -a /home/hadoop/lab/results/. results/ 2>/dev/null || true
+          sudo cp -a /home/hadoop/hadoop-logs results/ 2>/dev/null || true
+          sudo cp /home/hadoop/lab/build/lab1.jar results/ 2>/dev/null || true
+          sudo chown -R "$(id -u):$(id -g)" results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: experiment-evidence
+          path: results/
+          retention-days: 30
