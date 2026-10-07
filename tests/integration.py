@@ -66,6 +66,11 @@ def test_hdfs(backend):
     listing = op('list', base)
     (local / 'recursive-list.txt').write_text(listing)
     check(backend + ': recursive listing', 'sample.txt' in listing and 'new.txt' in listing)
+    external = base + '/external.txt'
+    dfs('-put', a, external)
+    external_stat = op('stat', external)
+    op('add', external, z, 'begin')
+    check(backend + ': external file without creation attribute', 'UNKNOWN' in external_stat and op('cat', external) == 'zero\nalpha\n')
     op('mkdir', base + '/empty/a/b')
     op('rmdir', base + '/empty/a/b')
     check(backend + ': recursive mkdir and empty rmdir')
