@@ -2,6 +2,16 @@
 
 实现 Linux 与 Hadoop 基础操作、HDFS Java API 和 Shell 操作，以及三个 Hadoop MapReduce 程序。
 
+## 已验证结果
+
+2026-10-07 的[实际运行](https://github.com/superbaibai1007-cell/big-data-lab1/actions/runs/37636819760)已成功完成，测试代码提交为 `3dd9c8180d8baeaf4347871b70dfc220f9433dd5`。
+
+- Java HDFS：17 项通过；Shell HDFS：17 项通过。
+- MapReduce：3 个题目样例及 1 个排序边界样例通过，共 **38 项全部通过**。
+- 合并去重输出 9 行，整数排序输出 11 行，祖孙关系输出 12 条；HDFS fsck 为 HEALTHY。
+- [evidence/](evidence/) 保存逐项验证清单、实际输出和环境记录，避免 Actions 构件到期后丢失关键结果。
+- 完整原始日志与 jar 位于该次运行的 `experiment-evidence` 构件，构件保留 30 天。
+
 ## 文件
 
 - `src/lab/HdfsCli.java`：上传追加或覆盖、重名下载、查看内容、元数据、递归遍历、文件与目录创建删除、首尾追加、移动。
