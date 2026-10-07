@@ -32,7 +32,7 @@ public final class HdfsCli extends Configured implements Tool {
     }
     private void stat(Path p) throws IOException {
         FileStatus s = fs.getFileStatus(p);
-        byte[] created = fs.getXAttr(p, CREATED);
+        byte[] created = fs.getXAttrs(p).get(CREATED);
         System.out.printf("%s\t%d\tmtime=%s\tcreated=%s\t%s%n", s.getPermission(), s.getLen(),
                 Instant.ofEpochMilli(s.getModificationTime()),
                 created == null ? "UNKNOWN(native HDFS API has no birth time)"
@@ -52,7 +52,7 @@ public final class HdfsCli extends Configured implements Tool {
                     ? fs.append(remote) : fs.create(remote, mode.equals("overwrite"))) {
             copy(in, out);
         }
-        if (!exists) markCreation(remote);
+        if (!exists || mode.equals("overwrite")) markCreation(remote);
     }
     private void download(Path source, java.nio.file.Path directory) throws IOException {
         requireFile(source);
@@ -78,6 +78,7 @@ public final class HdfsCli extends Configured implements Tool {
         }
     }
     private void add(Path target, java.nio.file.Path content, String position) throws IOException {
+        target = fs.makeQualified(target);
         requireFile(target);
         if (position.equals("end")) {
             try (InputStream in = Files.newInputStream(content); OutputStream out = fs.append(target)) {
@@ -86,7 +87,7 @@ public final class HdfsCli extends Configured implements Tool {
         } else if (position.equals("begin")) {
             // HDFS has no prepend. Stage new data and atomically rename over the original.
             FileStatus original = fs.getFileStatus(target);
-            byte[] created = fs.getXAttr(target, CREATED);
+            byte[] created = fs.getXAttrs(target).get(CREATED);
             Path stage = new Path(target.getParent(), "." + target.getName() + ".prepend-" + UUID.randomUUID());
             try {
                 try (InputStream prefix = Files.newInputStream(content);
