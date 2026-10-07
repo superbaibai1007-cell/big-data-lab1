@@ -19,8 +19,8 @@ jobs:
           java-version: '11'
       - name: Download and verify Apache Hadoop
         run: |
-          curl --fail --location --retry 3 -o /tmp/hadoop.tar.gz https://archive.apache.org/dist/hadoop/common/hadoop-3.4.1/hadoop-3.4.1.tar.gz
-          curl --fail --location --retry 3 -o /tmp/hadoop.sha512 https://archive.apache.org/dist/hadoop/common/hadoop-3.4.1/hadoop-3.4.1.tar.gz.sha512
+          curl --fail --location --retry 3 --max-time 300 -o /tmp/hadoop.tar.gz https://dlcdn.apache.org/hadoop/common/hadoop-3.4.1/hadoop-3.4.1.tar.gz
+          curl --fail --location --retry 3 --max-time 60 -o /tmp/hadoop.sha512 https://downloads.apache.org/hadoop/common/hadoop-3.4.1/hadoop-3.4.1.tar.gz.sha512
           expected=$(grep -Eo '[0-9a-fA-F]{128}' /tmp/hadoop.sha512 | head -1)
           test -n "$expected"
           echo "$expected  /tmp/hadoop.tar.gz" | sha512sum --check
